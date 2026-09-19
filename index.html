@@ -4,596 +4,1041 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Image Gallery</title>
 
 <style>
-    * {
-        box-sizing: border-box;
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+header {
+    padding: 24px 20px 18px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+#status {
+    margin-top: 8px;
+    color: #888;
+    font-size: 14px;
+}
+
+
+/* =========================
+   MASONRY GALLERY
+========================= */
+
+#gallery {
+    width: 100%;
+    max-width: 1600px;
+
+    margin: 0 auto;
+    padding: 8px 16px 40px;
+
+    column-count: 5;
+    column-gap: 14px;
+}
+
+
+/*
+    Each image stays at its natural
+    aspect ratio.
+*/
+
+.gallery-item {
+    position: relative;
+
+    width: 100%;
+
+    margin: 0 0 14px;
+
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    background: #1b1b1b;
+
+    cursor: pointer;
+
+    opacity: 0;
+
+    transform: translateY(5px);
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+
+.gallery-item.loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* Image itself */
+
+.gallery-item img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    /*
+        IMPORTANT:
+        Do NOT use object-fit here.
+
+        That would crop the images.
+    */
+
+    user-select: none;
+    -webkit-user-drag: none;
+
+    transition: transform 0.2s ease;
+}
+
+
+.gallery-item:hover img {
+    transform: scale(1.025);
+}
+
+
+/* Loading placeholder */
+
+.gallery-item::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    min-height: 120px;
+
+    background:
+        linear-gradient(
+            100deg,
+            #1b1b1b 30%,
+            #292929 50%,
+            #1b1b1b 70%
+        );
+
+    background-size: 200% 100%;
+
+    animation: loading 1.2s infinite;
+
+    z-index: 0;
+}
+
+
+.gallery-item img {
+    position: relative;
+    z-index: 1;
+}
+
+
+.gallery-item.loaded::before {
+    display: none;
+}
+
+
+@keyframes loading {
+
+    from {
+        background-position: 200% 0;
     }
 
-    html, body {
-        margin: 0;
-        padding: 0;
-        background: #111;
-        color: white;
-        font-family: Arial, Helvetica, sans-serif;
+    to {
+        background-position: -200% 0;
     }
 
-    body {
-        min-height: 100vh;
+}
+
+
+/* =========================
+   FULLSCREEN VIEWER
+========================= */
+
+#viewer {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.95);
+
+    padding: 70px 90px;
+}
+
+
+#viewer.active {
+    display: flex;
+}
+
+
+/* Full quality image */
+
+#viewerImage {
+
+    max-width: 100%;
+    max-height: 100%;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    user-select: none;
+    -webkit-user-drag: none;
+
+    border-radius: 3px;
+}
+
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+#closeButton {
+
+    position: fixed;
+
+    top: 16px;
+    right: 20px;
+
+    width: 50px;
+    height: 50px;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.12);
+
+    color: #fff;
+
+    font-size: 36px;
+
+    line-height: 46px;
+
+    cursor: pointer;
+
+    z-index: 10001;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+#closeButton:hover {
+
+    background: rgba(255,255,255,0.25);
+
+    transform: scale(1.08);
+}
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+.navButton {
+
+    position: fixed;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 58px;
+    height: 78px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: rgba(255,255,255,0.12);
+
+    color: #fff;
+
+    font-size: 42px;
+
+    cursor: pointer;
+
+    z-index: 10000;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.navButton:hover {
+
+    background: rgba(255,255,255,0.25);
+}
+
+
+#previousButton {
+    left: 16px;
+}
+
+
+#nextButton {
+    right: 16px;
+}
+
+
+/* =========================
+   COUNTER
+========================= */
+
+#counter {
+
+    position: fixed;
+
+    bottom: 18px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    padding: 7px 13px;
+
+    border-radius: 20px;
+
+    background: rgba(0,0,0,0.65);
+
+    color: #ddd;
+
+    font-size: 14px;
+
+    z-index: 10001;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 1200px) {
+
+    #gallery {
+        column-count: 4;
     }
+
+}
+
+
+@media (max-width: 900px) {
+
+    #gallery {
+        column-count: 3;
+    }
+
+}
+
+
+@media (max-width: 600px) {
 
     header {
-        padding: 22px 25px;
-        text-align: center;
+        padding: 20px 15px 14px;
     }
 
     h1 {
-        margin: 0;
-        font-size: 26px;
-        font-weight: 600;
+        font-size: 22px;
     }
 
-    #status {
-        margin-top: 8px;
-        color: #999;
-        font-size: 14px;
-    }
-
-    /* Gallery */
     #gallery {
-        width: 100%;
-        max-width: 1500px;
-        margin: 0 auto;
-        padding: 10px 20px 40px;
 
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 14px;
+        padding: 6px 8px 25px;
+
+        column-count: 2;
+
+        column-gap: 8px;
     }
 
     .gallery-item {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        overflow: hidden;
-        border-radius: 10px;
-        background: #1c1c1c;
-        cursor: pointer;
+        margin-bottom: 8px;
+        border-radius: 7px;
     }
 
-    .gallery-item img {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-
-        /* Prevent dragging images */
-        user-select: none;
-        -webkit-user-drag: none;
-
-        transition: transform 0.2s ease;
-    }
-
-    .gallery-item:hover img {
-        transform: scale(1.04);
-    }
-
-    /* Loading placeholder */
-    .gallery-item.loading::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            100deg,
-            #1c1c1c 30%,
-            #292929 50%,
-            #1c1c1c 70%
-        );
-        background-size: 200% 100%;
-        animation: loading 1.2s infinite;
-    }
-
-    @keyframes loading {
-        from {
-            background-position: 200% 0;
-        }
-
-        to {
-            background-position: -200% 0;
-        }
-    }
-
-    /* Fullscreen viewer */
     #viewer {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
 
-        display: none;
-        align-items: center;
-        justify-content: center;
-
-        background: rgba(0, 0, 0, 0.94);
-        padding: 70px 80px;
+        padding: 60px 48px;
     }
 
-    #viewer.active {
-        display: flex;
-    }
-
-    #viewerImage {
-        max-width: 100%;
-        max-height: 100%;
-
-        width: auto;
-        height: auto;
-
-        object-fit: contain;
-
-        user-select: none;
-        -webkit-user-drag: none;
-
-        border-radius: 4px;
-    }
-
-    /* Close button */
-    #closeButton {
-        position: fixed;
-        top: 18px;
-        right: 24px;
-
-        width: 48px;
-        height: 48px;
-
-        border: none;
-        border-radius: 50%;
-
-        background: rgba(255,255,255,0.12);
-        color: white;
-
-        font-size: 34px;
-        line-height: 42px;
-
-        cursor: pointer;
-        z-index: 10001;
-
-        transition: background 0.15s ease,
-                    transform 0.15s ease;
-    }
-
-    #closeButton:hover {
-        background: rgba(255,255,255,0.25);
-        transform: scale(1.08);
-    }
-
-    /* Navigation buttons */
     .navButton {
-        position: fixed;
-        top: 50%;
-        transform: translateY(-50%);
 
-        width: 55px;
-        height: 75px;
+        width: 42px;
+        height: 60px;
 
-        border: none;
-        border-radius: 10px;
-
-        background: rgba(255,255,255,0.12);
-        color: white;
-
-        font-size: 38px;
-
-        cursor: pointer;
-        z-index: 10000;
-
-        transition: background 0.15s ease,
-                    transform 0.15s ease;
-    }
-
-    .navButton:hover {
-        background: rgba(255,255,255,0.25);
+        font-size: 30px;
     }
 
     #previousButton {
-        left: 18px;
+        left: 6px;
     }
 
     #nextButton {
-        right: 18px;
+        right: 6px;
     }
 
-    /* Image counter */
-    #counter {
-        position: fixed;
-        bottom: 18px;
-        left: 50%;
-        transform: translateX(-50%);
+    #closeButton {
 
-        padding: 7px 13px;
+        top: 9px;
+        right: 9px;
 
-        border-radius: 20px;
+        width: 43px;
+        height: 43px;
 
-        background: rgba(0,0,0,0.55);
-        color: #ddd;
-
-        font-size: 14px;
-
-        z-index: 10001;
+        font-size: 30px;
+        line-height: 39px;
     }
 
-    /* Mobile */
-    @media (max-width: 600px) {
-        header {
-            padding: 18px 15px;
-        }
+}
 
-        h1 {
-            font-size: 22px;
-        }
 
-        #gallery {
-            padding: 8px 10px 25px;
-            gap: 8px;
+/* =========================
+   VERY SMALL PHONES
+========================= */
 
-            grid-template-columns:
-                repeat(auto-fill, minmax(130px, 1fr));
-        }
+@media (max-width: 380px) {
 
-        #viewer {
-            padding: 60px 45px;
-        }
-
-        .navButton {
-            width: 42px;
-            height: 60px;
-            font-size: 28px;
-        }
-
-        #previousButton {
-            left: 7px;
-        }
-
-        #nextButton {
-            right: 7px;
-        }
-
-        #closeButton {
-            top: 10px;
-            right: 10px;
-            width: 42px;
-            height: 42px;
-            font-size: 29px;
-        }
+    #gallery {
+        column-count: 2;
     }
+
+}
+
 </style>
 </head>
 
+
 <body>
 
+
 <header>
+
     <h1>Image Gallery</h1>
-    <div id="status">Loading images...</div>
+
+    <div id="status">
+        Loading images...
+    </div>
+
 </header>
+
 
 <main id="gallery"></main>
 
-<!-- Fullscreen viewer -->
+
+<!-- =========================
+     FULLSCREEN VIEWER
+========================= -->
+
 <div id="viewer">
 
-    <button id="closeButton" aria-label="Close">×</button>
+    <button
+        id="closeButton"
+        aria-label="Close"
+    >
+        ×
+    </button>
+
 
     <button
         class="navButton"
         id="previousButton"
         aria-label="Previous image"
-    >‹</button>
+    >
+        ‹
+    </button>
 
-    <img id="viewerImage" alt="">
+
+    <img
+        id="viewerImage"
+        alt=""
+    >
+
 
     <button
         class="navButton"
         id="nextButton"
         aria-label="Next image"
-    >›</button>
+    >
+        ›
+    </button>
+
 
     <div id="counter"></div>
 
 </div>
 
-<script>
-/*
-    Repository:
-    https://github.com/typeacc/ImageAvailability
 
-    Images:
-    /images
-*/
+
+<script>
+
+
+/* =========================================================
+   REPOSITORY SETTINGS
+========================================================= */
 
 const OWNER = "typeacc";
+
 const REPOSITORY = "ImageAvailability";
+
 const BRANCH = "main";
+
 const IMAGE_FOLDER = "images";
+
+
+/* GitHub API */
 
 const API_URL =
     `https://api.github.com/repos/${OWNER}/${REPOSITORY}/contents/${IMAGE_FOLDER}?ref=${BRANCH}`;
 
+
+/* Original full-quality images */
+
 const RAW_BASE =
     `https://raw.githubusercontent.com/${OWNER}/${REPOSITORY}/${BRANCH}/${IMAGE_FOLDER}/`;
 
-const gallery = document.getElementById("gallery");
-const statusText = document.getElementById("status");
 
-const viewer = document.getElementById("viewer");
-const viewerImage = document.getElementById("viewerImage");
 
-const closeButton = document.getElementById("closeButton");
-const previousButton = document.getElementById("previousButton");
-const nextButton = document.getElementById("nextButton");
+/* =========================================================
+   ELEMENTS
+========================================================= */
 
-const counter = document.getElementById("counter");
+const gallery =
+    document.getElementById("gallery");
+
+const statusText =
+    document.getElementById("status");
+
+const viewer =
+    document.getElementById("viewer");
+
+const viewerImage =
+    document.getElementById("viewerImage");
+
+const closeButton =
+    document.getElementById("closeButton");
+
+const previousButton =
+    document.getElementById("previousButton");
+
+const nextButton =
+    document.getElementById("nextButton");
+
+const counter =
+    document.getElementById("counter");
+
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
 
 let images = [];
+
 let currentIndex = 0;
 
 
+
 /* Supported image formats */
+
 const imageExtensions = [
+
     ".jpg",
     ".jpeg",
     ".png",
-    ".gif",
     ".webp",
+    ".gif",
     ".avif",
     ".bmp",
     ".svg"
+
 ];
 
 
-/* Check if a filename is an image */
+
+/* =========================================================
+   CHECK IMAGE
+========================================================= */
+
 function isImage(filename) {
-    const lower = filename.toLowerCase();
+
+    const lower =
+        filename.toLowerCase();
 
     return imageExtensions.some(
-        extension => lower.endsWith(extension)
+        extension =>
+            lower.endsWith(extension)
     );
+
 }
 
 
-/*
-    Escape a filename so it works correctly inside URLs.
-*/
+
+/* =========================================================
+   SAFE IMAGE URL
+========================================================= */
+
 function imageURL(filename) {
-    return RAW_BASE
-        + filename
+
+    return RAW_BASE +
+        filename
             .split("/")
-            .map(part => encodeURIComponent(part))
+            .map(
+                part =>
+                    encodeURIComponent(part)
+            )
             .join("/");
+
 }
 
 
-/*
-    Create a thumbnail-style gallery item.
 
-    The browser uses lazy loading so images that are
-    far below the screen aren't downloaded immediately.
-*/
+/* =========================================================
+   CREATE GALLERY ITEM
+========================================================= */
+
 function createGalleryItem(filename, index) {
 
-    const item = document.createElement("div");
 
-    item.className = "gallery-item loading";
+    const item =
+        document.createElement("div");
 
-    const img = document.createElement("img");
+
+    item.className =
+        "gallery-item";
+
+
+    const img =
+        document.createElement("img");
+
+
+    /*
+        Lazy loading means the browser doesn't
+        immediately download all 40+ images.
+    */
 
     img.loading = "lazy";
+
+
+    /*
+        Allows the browser to decode the
+        image without blocking the page.
+    */
+
     img.decoding = "async";
+
 
     img.alt = filename;
 
+
     /*
-        We don't load the image until the browser needs it.
+        Use the original image for the
+        gallery, but let the browser lazy-load it.
     */
-    img.src = imageURL(filename);
 
-    img.onload = () => {
-        item.classList.remove("loading");
-    };
+    img.src =
+        imageURL(filename);
 
-    img.onerror = () => {
-        item.classList.remove("loading");
-        item.style.display = "none";
-    };
 
-    item.addEventListener("click", () => {
-        openViewer(index);
-    });
+    /*
+        Image finished loading.
+    */
+
+    img.addEventListener(
+        "load",
+        () => {
+
+            item.classList.add("loaded");
+
+        },
+        { once: true }
+    );
+
+
+    /*
+        Broken image.
+    */
+
+    img.addEventListener(
+        "error",
+        () => {
+
+            item.remove();
+
+        },
+        { once: true }
+    );
+
+
+    /*
+        Click image.
+    */
+
+    item.addEventListener(
+        "click",
+        () => {
+
+            openViewer(index);
+
+        }
+    );
+
 
     item.appendChild(img);
 
     return item;
+
 }
 
 
-/*
-    Get all files from /images using GitHub's API.
-*/
+
+/* =========================================================
+   LOAD IMAGE LIST FROM GITHUB
+========================================================= */
+
 async function loadImages() {
+
 
     try {
 
-        const response = await fetch(API_URL);
+
+        const response =
+            await fetch(API_URL);
+
 
         if (!response.ok) {
+
             throw new Error(
-                `GitHub API returned ${response.status}`
+                `GitHub API error: ${response.status}`
             );
+
         }
 
-        const files = await response.json();
+
+        const files =
+            await response.json();
+
+
+        /*
+            Keep only actual image files.
+        */
 
         images = files
-            .filter(file => file.type === "file")
-            .filter(file => isImage(file.name))
-            .map(file => file.name)
-            .sort((a, b) =>
-                a.localeCompare(
-                    b,
-                    undefined,
-                    {
-                        numeric: true,
-                        sensitivity: "base"
-                    }
-                )
+
+            .filter(
+                file =>
+                    file.type === "file"
+            )
+
+            .filter(
+                file =>
+                    isImage(file.name)
+            )
+
+            .map(
+                file =>
+                    file.name
+            )
+
+            .sort(
+                (a, b) =>
+                    a.localeCompare(
+                        b,
+                        undefined,
+                        {
+                            numeric: true,
+                            sensitivity: "base"
+                        }
+                    )
             );
 
-        if (images.length === 0) {
+
+        if (!images.length) {
 
             statusText.textContent =
                 "No images found.";
 
             return;
+
         }
+
 
         statusText.textContent =
             `${images.length} images`;
 
+
         /*
-            Create all gallery entries.
-            Actual image loading is handled by
-            the browser's lazy-loading system.
+            Create gallery items.
+
+            The images themselves remain
+            lazy-loaded by the browser.
         */
-        images.forEach((filename, index) => {
 
-            gallery.appendChild(
-                createGalleryItem(filename, index)
-            );
+        const fragment =
+            document.createDocumentFragment();
 
-        });
+
+        images.forEach(
+            (filename, index) => {
+
+                fragment.appendChild(
+                    createGalleryItem(
+                        filename,
+                        index
+                    )
+                );
+
+            }
+        );
+
+
+        gallery.appendChild(fragment);
+
 
     } catch (error) {
 
+
         console.error(error);
+
 
         statusText.textContent =
             "Could not load the images.";
 
+
         gallery.innerHTML = `
+
             <div style="
-                grid-column: 1 / -1;
+                column-span: all;
                 text-align: center;
                 color: #aaa;
                 padding: 50px 20px;
             ">
+
                 Failed to load the image list from GitHub.
+
             </div>
+
         `;
+
     }
+
 }
 
 
-/*
-    Open fullscreen viewer.
-*/
+
+/* =========================================================
+   OPEN FULLSCREEN
+========================================================= */
+
 function openViewer(index) {
 
-    if (!images.length) return;
 
-    currentIndex = index;
+    if (!images.length) {
+        return;
+    }
 
-    viewer.classList.add("active");
 
-    document.body.style.overflow = "hidden";
+    currentIndex =
+        index;
+
+
+    viewer.classList.add(
+        "active"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+
 
     showCurrentImage();
+
 }
 
 
-/*
-    Display the current full-resolution image.
-*/
+
+/* =========================================================
+   SHOW FULL-QUALITY IMAGE
+========================================================= */
+
 function showCurrentImage() {
 
-    const filename = images[currentIndex];
+
+    const filename =
+        images[currentIndex];
+
 
     /*
-        Only now do we load the full-resolution image.
-    */
-    viewerImage.src = imageURL(filename);
+        IMPORTANT:
 
-    viewerImage.alt = filename;
+        This is the original full-quality
+        image.
+
+        It isn't loaded until the user
+        clicks an image.
+    */
+
+    viewerImage.src =
+        imageURL(filename);
+
+
+    viewerImage.alt =
+        filename;
+
 
     counter.textContent =
         `${currentIndex + 1} / ${images.length}`;
 
-    /*
-        Hide arrows when there is only one image.
-    */
+
     previousButton.style.display =
-        images.length > 1 ? "block" : "none";
+        images.length > 1
+            ? "block"
+            : "none";
+
 
     nextButton.style.display =
-        images.length > 1 ? "block" : "none";
+        images.length > 1
+            ? "block"
+            : "none";
+
 }
 
 
-/*
-    Previous image.
-*/
+
+/* =========================================================
+   PREVIOUS
+========================================================= */
+
 function previousImage() {
 
-    if (!images.length) return;
+
+    if (!images.length) {
+        return;
+    }
+
 
     currentIndex =
-        (currentIndex - 1 + images.length)
-        % images.length;
+        (
+            currentIndex -
+            1 +
+            images.length
+        ) % images.length;
+
 
     showCurrentImage();
+
 }
 
 
-/*
-    Next image.
-*/
+
+/* =========================================================
+   NEXT
+========================================================= */
+
 function nextImage() {
 
-    if (!images.length) return;
+
+    if (!images.length) {
+        return;
+    }
+
 
     currentIndex =
-        (currentIndex + 1)
-        % images.length;
+        (
+            currentIndex +
+            1
+        ) % images.length;
+
 
     showCurrentImage();
+
 }
 
 
-/*
-    Close viewer.
-*/
+
+/* =========================================================
+   CLOSE
+========================================================= */
+
 function closeViewer() {
 
-    viewer.classList.remove("active");
 
-    document.body.style.overflow = "";
+    viewer.classList.remove(
+        "active"
+    );
+
+
+    document.body.style.overflow =
+        "";
+
 
     /*
-        Free the full-resolution image from memory
-        when the viewer closes.
+        Free the full-resolution
+        image after closing.
     */
-    viewerImage.src = "";
+
+    viewerImage.src =
+        "";
+
 }
 
 
-/* Button controls */
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
 closeButton.addEventListener(
     "click",
     closeViewer
 );
 
+
 previousButton.addEventListener(
     "click",
     previousImage
 );
+
 
 nextButton.addEventListener(
     "click",
@@ -601,48 +1046,87 @@ nextButton.addEventListener(
 );
 
 
-/*
-    Clicking the dark area closes the viewer.
 
-    Clicking the actual image does NOT close it.
-*/
-viewer.addEventListener("click", event => {
+/* =========================================================
+   CLICK OUTSIDE IMAGE
+========================================================= */
 
-    if (event.target === viewer) {
-        closeViewer();
+viewer.addEventListener(
+    "click",
+    event => {
+
+
+        if (
+            event.target === viewer
+        ) {
+
+            closeViewer();
+
+        }
+
     }
+);
 
-});
 
 
-/*
-    Keyboard controls.
-*/
-document.addEventListener("keydown", event => {
+/* =========================================================
+   KEYBOARD
+========================================================= */
 
-    if (!viewer.classList.contains("active")) {
-        return;
+document.addEventListener(
+    "keydown",
+    event => {
+
+
+        if (
+            !viewer.classList.contains(
+                "active"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            closeViewer();
+
+        }
+
+
+        if (
+            event.key === "ArrowLeft"
+        ) {
+
+            previousImage();
+
+        }
+
+
+        if (
+            event.key === "ArrowRight"
+        ) {
+
+            nextImage();
+
+        }
+
     }
-
-    if (event.key === "Escape") {
-        closeViewer();
-    }
-
-    if (event.key === "ArrowLeft") {
-        previousImage();
-    }
-
-    if (event.key === "ArrowRight") {
-        nextImage();
-    }
-
-});
+);
 
 
-/*
-    Start loading the gallery.
-*/
+
+/* =========================================================
+   START
+========================================================= */
+
 loadImages();
+
+
 </script>
 
 </body>
